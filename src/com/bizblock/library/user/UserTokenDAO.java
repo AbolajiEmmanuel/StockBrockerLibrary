@@ -1,9 +1,7 @@
 package com.bizblock.library.user;
 
 import com.bizblock.library.database.DBConfiguration;
-import static com.bizblock.library.user.User.USER_NAME;
-import static com.bizblock.library.user.UserToken.EXPIRY_DATE;
-import static com.bizblock.library.user.UserToken.USER_TOKEN;
+import static com.bizblock.library.user.UserToken.*;
 import com.bizblock.user.util.RandomNumberGenerator;
 import java.util.List;
 import javax.persistence.EntityExistsException;
