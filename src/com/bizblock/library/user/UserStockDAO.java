@@ -1,5 +1,6 @@
 package com.bizblock.library.user;
 
+import com.bizblock.library.company.CompanyStock;
 import com.bizblock.library.database.DBConfiguration;
 import static com.bizblock.library.user.UserStock.*;
 import com.bizblock.user.util.RandomNumberGenerator;
@@ -24,7 +25,7 @@ public class UserStockDAO
 {
     public static void registerNewUserStock(UserStock userStock) throws Exception, EntityExistsException
     {
-        try( DBConfiguration dbConfig = new DBConfiguration())
+        try(DBConfiguration dbConfig = new DBConfiguration())
         {
             EntityManager em = dbConfig.getEntityManager();
             em.getTransaction().begin();
@@ -33,17 +34,34 @@ public class UserStockDAO
         }
     }
 
-    public static UserStock getUserStockByUserNameAndCompanyName(String userName, String companyName) throws Exception
+    public static UserStock getUserStockByUserNameAndCompanySymbol(String userName, String companySymbol) throws Exception
     {
-        try( DBConfiguration dbConfig = new DBConfiguration())
+        try(DBConfiguration dbConfig = new DBConfiguration())
         {
             EntityManager em = dbConfig.getEntityManager();
-            String sql = "SELECT * FROM " + USER_STOCKS + " WHERE " + USER_NAME + " = ? AND " + COMPANY_NAME + " = ?";
+            String sql = "SELECT * FROM " + USER_STOCKS + " WHERE " + USER_NAME + " = ? AND " + SYMBOL + " = ?";
             Query q = em.createNativeQuery(sql, UserStock.class);
             q.setParameter(1, userName);
-            q.setParameter(2, companyName);
+            q.setParameter(2, companySymbol);
             UserStock userStock = (UserStock)q.getSingleResult();
             return userStock;
+        }
+        catch(NoResultException nre)
+        {
+            return null;
+        }
+    }
+
+    public static CompanyStock getStockByCompanySymbol(String companySymbol) throws Exception
+    {
+        try(DBConfiguration dbConfig = new DBConfiguration())
+        {
+            EntityManager em = dbConfig.getEntityManager();
+            String sql = "SELECT * FROM " + CompanyStock.COMPANY_STOCKS + " WHERE " + CompanyStock.SYMBOL + " = ?";
+            Query q = em.createNativeQuery(sql, CompanyStock.class);
+            q.setParameter(1, companySymbol);
+            CompanyStock stock = (CompanyStock)q.getSingleResult();
+            return stock;
         }
         catch(NoResultException nre)
         {
@@ -68,9 +86,9 @@ public class UserStockDAO
         }
     }
 
-    public static void sellUserStock(String userName, String companyName, int noOfShares) throws Exception
+    public static void sellUserStock(String userName, String companySymbol, int noOfShares) throws Exception
     {
-        UserStock userStock = getUserStockByUserNameAndCompanyName(userName, companyName);
+        UserStock userStock = getUserStockByUserNameAndCompanySymbol(userName, companySymbol);
         if(userStock != null)
             if(userStock.getNumberOfShares() > 0 && userStock.getNumberOfShares() >= noOfShares)
             {
@@ -85,9 +103,9 @@ public class UserStockDAO
 
     }
 
-    public static void buyUserStock(String userName, String companyName, int noOfShares, String symbol) throws Exception
+    public static void buyUserStock(String userName, int noOfShares, String symbol) throws Exception
     {
-        UserStock userStock = getUserStockByUserNameAndCompanyName(userName, companyName);
+        UserStock userStock = getUserStockByUserNameAndCompanySymbol(userName, symbol);
         if(userStock != null)
         {
             int newNumberOfShares = userStock.getNumberOfShares() + noOfShares;
@@ -95,8 +113,9 @@ public class UserStockDAO
         }
         else
         {
+            CompanyStock stockName = getStockByCompanySymbol(symbol);
             UserStock newUserStock = new UserStock();
-            newUserStock.setCompanyName(companyName);
+            newUserStock.setCompanyName(stockName.getName());
             newUserStock.setNumberOfShares(noOfShares);
             newUserStock.setSymbol(symbol);
             newUserStock.setUserName(userName);
@@ -108,7 +127,7 @@ public class UserStockDAO
     public static String generateUniqueUserID() throws Exception
     {
         String userId = null;
-        try( DBConfiguration dbConfig = new DBConfiguration())
+        try(DBConfiguration dbConfig = new DBConfiguration())
         {
             EntityManager em = dbConfig.getEntityManager();
             User user;
@@ -125,7 +144,7 @@ public class UserStockDAO
     public static List<UserStock> getAllUserStockByUserName(String username) throws Exception
     {
 
-        try( DBConfiguration dbConfig = new DBConfiguration())
+        try(DBConfiguration dbConfig = new DBConfiguration())
         {
             EntityManager em = dbConfig.getEntityManager();
             String sql = "SELECT * FROM " + USER_STOCKS + " WHERE " + USER_NAME + " = ?";
