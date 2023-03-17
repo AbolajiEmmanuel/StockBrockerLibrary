@@ -42,6 +42,12 @@ public class UserTokenDAO
         }
     }
 
+    public static boolean tokenIsValid(String userName, String token) throws Exception
+    {
+        UserToken userToken = getUserTokenByUserName(userName);
+        return userToken.getToken().equals(token);
+    }
+
     public static String generateUniqueUserToken() throws Exception
     {
         String token = null;

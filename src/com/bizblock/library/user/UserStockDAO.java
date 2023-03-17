@@ -25,7 +25,7 @@ public class UserStockDAO
 {
     public static void registerNewUserStock(UserStock userStock) throws Exception, EntityExistsException
     {
-        try(DBConfiguration dbConfig = new DBConfiguration())
+        try( DBConfiguration dbConfig = new DBConfiguration())
         {
             EntityManager em = dbConfig.getEntityManager();
             em.getTransaction().begin();
@@ -36,7 +36,7 @@ public class UserStockDAO
 
     public static UserStock getUserStockByUserNameAndCompanySymbol(String userName, String companySymbol) throws Exception
     {
-        try(DBConfiguration dbConfig = new DBConfiguration())
+        try( DBConfiguration dbConfig = new DBConfiguration())
         {
             EntityManager em = dbConfig.getEntityManager();
             String sql = "SELECT * FROM " + USER_STOCKS + " WHERE " + USER_NAME + " = ? AND " + SYMBOL + " = ?";
@@ -54,7 +54,7 @@ public class UserStockDAO
 
     public static CompanyStock getStockByCompanySymbol(String companySymbol) throws Exception
     {
-        try(DBConfiguration dbConfig = new DBConfiguration())
+        try( DBConfiguration dbConfig = new DBConfiguration())
         {
             EntityManager em = dbConfig.getEntityManager();
             String sql = "SELECT * FROM " + CompanyStock.COMPANY_STOCKS + " WHERE " + CompanyStock.SYMBOL + " = ?";
@@ -127,7 +127,7 @@ public class UserStockDAO
     public static String generateUniqueUserID() throws Exception
     {
         String userId = null;
-        try(DBConfiguration dbConfig = new DBConfiguration())
+        try( DBConfiguration dbConfig = new DBConfiguration())
         {
             EntityManager em = dbConfig.getEntityManager();
             User user;
@@ -144,7 +144,7 @@ public class UserStockDAO
     public static List<UserStock> getAllUserStockByUserName(String username) throws Exception
     {
 
-        try(DBConfiguration dbConfig = new DBConfiguration())
+        try( DBConfiguration dbConfig = new DBConfiguration())
         {
             EntityManager em = dbConfig.getEntityManager();
             String sql = "SELECT * FROM " + USER_STOCKS + " WHERE " + USER_NAME + " = ?";
@@ -155,19 +155,17 @@ public class UserStockDAO
         }
     }
 
-    public static double convertCurrency(double amount, String currencyPayment, String companyPayment) throws UnirestException, JSONException
+    public static double convertCurrency(String paymentCurrency, String companyCurrency) throws UnirestException, JSONException
     {
         HttpResponse<JsonNode> jsonResponse = Unirest.get("https://api.apilayer.com/exchangerates_data/latest")
                 .header("apikey", "7Ct4899ogYI4n73hCpQ0RaNEgDTbzILC")
-                .queryString("symbol", currencyPayment)
-                .queryString("base", companyPayment)
+                .queryString("symbol", paymentCurrency)
+                .queryString("base", companyCurrency)
                 .asJson();
         JsonNode jsonNode = jsonResponse.getBody();
         JSONObject jsonoObject = jsonNode.getObject();
         JSONObject rates = jsonoObject.getJSONObject("rates");
-        double rate = rates.getDouble(currencyPayment);
-        double nairaValue = amount * rate;
-        return nairaValue;
-
+        double rate = rates.getDouble(paymentCurrency);
+        return rate;
     }
 }
