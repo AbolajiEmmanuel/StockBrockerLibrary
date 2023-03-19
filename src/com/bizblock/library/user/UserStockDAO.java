@@ -1,6 +1,7 @@
 package com.bizblock.library.user;
 
 import com.bizblock.library.company.CompanyStock;
+import com.bizblock.library.company.CompanyStockDAO;
 import com.bizblock.library.database.DBConfiguration;
 import static com.bizblock.library.user.UserStock.*;
 import com.bizblock.user.util.RandomNumberGenerator;
@@ -57,10 +58,7 @@ public class UserStockDAO
         try( DBConfiguration dbConfig = new DBConfiguration())
         {
             EntityManager em = dbConfig.getEntityManager();
-            String sql = "SELECT * FROM " + CompanyStock.COMPANY_STOCKS + " WHERE " + CompanyStock.SYMBOL + " = ?";
-            Query q = em.createNativeQuery(sql, CompanyStock.class);
-            q.setParameter(1, companySymbol);
-            CompanyStock stock = (CompanyStock)q.getSingleResult();
+            CompanyStock stock = em.find(CompanyStock.class, companySymbol);
             return stock;
         }
         catch(NoResultException nre)
@@ -95,16 +93,19 @@ public class UserStockDAO
                 int newNumberOfShares = userStock.getNumberOfShares() - noOfShares;
                 System.out.println(userStock.getNumberOfShares());
                 updateUserStock(userStock, newNumberOfShares);
+                CompanyStock companyStock = CompanyStockDAO.getCompanyStock(companySymbol);
+                int updatedNumberOfShares = companyStock.getNumberOfShares() + noOfShares;
+                CompanyStockDAO.updateCompanyStock(companySymbol, updatedNumberOfShares);
             }
             else
                 throw new IllegalArgumentException("Insufficient stocks");
         else
             throw new IllegalArgumentException("user not found");
-
     }
 
     public static void buyUserStock(String userName, int noOfShares, String symbol) throws Exception
     {
+        CompanyStock companyStock = getStockByCompanySymbol(symbol);
         UserStock userStock = getUserStockByUserNameAndCompanySymbol(userName, symbol);
         if(userStock != null)
         {
@@ -113,15 +114,17 @@ public class UserStockDAO
         }
         else
         {
-            CompanyStock stockName = getStockByCompanySymbol(symbol);
             UserStock newUserStock = new UserStock();
-            newUserStock.setCompanyName(stockName.getName());
+            newUserStock.setCompanyName(companyStock.getName());
             newUserStock.setNumberOfShares(noOfShares);
             newUserStock.setSymbol(symbol);
             newUserStock.setUserName(userName);
             newUserStock.setId(generateUniqueUserID());
             registerNewUserStock(newUserStock);
         }
+        int updatedAmount = companyStock.getNumberOfShares() - noOfShares;
+        CompanyStockDAO.updateCompanyStock(symbol, updatedAmount);
+        System.out.println("Updated company shares to: " + updatedAmount);
     }
 
     public static String generateUniqueUserID() throws Exception
@@ -158,7 +161,7 @@ public class UserStockDAO
     public static double convertCurrency(String paymentCurrency, String companyCurrency) throws UnirestException, JSONException
     {
         HttpResponse<JsonNode> jsonResponse = Unirest.get("https://api.apilayer.com/exchangerates_data/latest")
-                .header("apikey", "7Ct4899ogYI4n73hCpQ0RaNEgDTbzILC")
+                .header("apikey", "d60aYdiwaB02wp3wU96gZNugQjkhksLp")
                 .queryString("symbol", paymentCurrency)
                 .queryString("base", companyCurrency)
                 .asJson();

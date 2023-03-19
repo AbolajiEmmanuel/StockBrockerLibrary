@@ -1,7 +1,7 @@
 package com.bizblock.library.company;
 
-import com.bizblock.library.database.DBConfiguration;
 import static com.bizblock.library.company.CompanyStock.COMPANY_STOCKS;
+import com.bizblock.library.database.DBConfiguration;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
@@ -35,6 +35,7 @@ public class CompanyStockDAO
         try( DBConfiguration dbConfig = new DBConfiguration())
         {
             EntityManager em = dbConfig.getEntityManager();
+            em.getEntityManagerFactory().getCache().evictAll();
             String sql = "SELECT * FROM " + COMPANY_STOCKS;
             Query q = em.createNativeQuery(sql, CompanyStock.class);
             List<CompanyStock> companyStocks = q.getResultList();
@@ -52,13 +53,13 @@ public class CompanyStockDAO
         }
     }
 
-    public static void updateCompanyStock(CompanyStock companyStock, int amountOfShares) throws Exception
+    public static void updateCompanyStock(String companySymbol, int amountOfShares) throws Exception
     {
         try( DBConfiguration dbConfig = new DBConfiguration())
         {
             EntityManager em = dbConfig.getEntityManager();
             em.getTransaction().begin();
-            CompanyStock cs = em.find(CompanyStock.class, companyStock.getSymbol());
+            CompanyStock cs = em.find(CompanyStock.class, companySymbol);
             cs.setNumberOfShares(amountOfShares);
             em.getTransaction().commit();
         }
